@@ -113,6 +113,14 @@ body {
   font-weight: 600;
 }
 
+.goal-line {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+  color: rgba(251, 191, 36, 0.86);
+  letter-spacing: 0.02em;
+}
+
 .audio-controls {
   display: flex;
   align-items: center;

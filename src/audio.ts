@@ -212,6 +212,10 @@ export class AudioEngine {
     };
   }
 
+  public getCurrentBpm(): number {
+    return TRACKS[this.trackIndex].bpm;
+  }
+
   public nextTrack(): TrackInfo {
     this.trackIndex = (this.trackIndex + 1) % TRACKS.length;
     if (this.mode === 'tone' && this.ctx) {

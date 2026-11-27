@@ -10,6 +10,8 @@ export interface GameSnapshot {
   maxStreak: number;
   widthPct: number;
   accuracyPct: number;
+  goalLabel: string;
+  goalsCleared: number;
 }
 
 interface Slab {
@@ -75,6 +77,23 @@ const SLAB_HEIGHT = 24;
 const DEPTH_Y = 7;
 const PERFECT_TOLERANCE_PX = 5.2;
 
+interface RunGoal {
+  type: 'streak' | 'floor' | 'beat';
+  target: number;
+  bonus: number;
+  label: string;
+}
+
+const RUN_GOALS: RunGoal[] = [
+  { type: 'streak', target: 3, bonus: 3, label: '3× PERFECT STREAK' },
+  { type: 'floor', target: 12, bonus: 5, label: 'REACH 12F' },
+  { type: 'beat', target: 4, bonus: 5, label: '4 ON-BEAT DROPS' },
+  { type: 'streak', target: 5, bonus: 8, label: '5× PERFECT STREAK' },
+  { type: 'floor', target: 25, bonus: 10, label: 'REACH 25F' },
+  { type: 'beat', target: 10, bonus: 10, label: '10 ON-BEAT DROPS' },
+  { type: 'floor', target: 40, bonus: 15, label: 'REACH 40F' }
+];
+
 export class PrecisionStackGame {
   private readonly ctx: CanvasRenderingContext2D;
   private width = 0;
@@ -99,6 +118,9 @@ export class PrecisionStackGame {
   private maxStreak = 0;
   private totalDrops = 0;
   private perfectDrops = 0;
+  private onBeatDrops = 0;
+  private goalIndex = 0;
+  private goalsCleared = 0;
 
   private cameraY = 0;
   private targetCameraY = 0;
@@ -197,6 +219,9 @@ export class PrecisionStackGame {
     this.maxStreak = 0;
     this.totalDrops = 0;
     this.perfectDrops = 0;
+    this.onBeatDrops = 0;
+    this.goalIndex = 0;
+    this.goalsCleared = 0;
     this.audio.setTowerLevel(0);
     this.emitSnapshot();
   }
@@ -213,6 +238,9 @@ export class PrecisionStackGame {
     this.maxStreak = 0;
     this.totalDrops = 0;
     this.perfectDrops = 0;
+    this.onBeatDrops = 0;
+    this.goalIndex = 0;
+    this.goalsCleared = 0;
     this.passedBestLine = this.bestHeightFloors === 0;
     this.cameraY = 0;
     this.targetCameraY = 0;
@@ -233,7 +261,8 @@ export class PrecisionStackGame {
     const dir: 1 | -1 = levelIndex % 2 === 1 ? 1 : -1;
     const travelMargin = Math.max(100, this.baseWidth * 0.74);
     const startX = -dir * (top.width * 0.5 + travelMargin);
-    const speed = Math.min(520, 235 + levelIndex * 6.8);
+    const bpmScale = this.audio.mode === 'tone' ? Math.max(0.84, Math.min(1.18, this.audio.getCurrentBpm() / 120)) : 1;
+    const speed = Math.min(540, (235 + levelIndex * 6.8) * bpmScale);
     const hue = (196 + levelIndex * 11) % 360;
 
     this.active = {
@@ -257,6 +286,9 @@ export class PrecisionStackGame {
     const onBeat = this.audio.mode !== 'off' && this.audioMetrics.onBeat;
 
     this.totalDrops += 1;
+    if (onBeat) {
+      this.onBeatDrops += 1;
+    }
 
     // Perfect alignment
     if (Math.abs(delta) <= PERFECT_TOLERANCE_PX) {
@@ -416,6 +448,30 @@ export class PrecisionStackGame {
 
   private checkMilestones(worldY: number): void {
     const floors = this.stack.length - 1;
+    const activeGoal = RUN_GOALS[this.goalIndex % RUN_GOALS.length];
+    if (activeGoal) {
+      const progress =
+        activeGoal.type === 'streak'
+          ? this.streak
+          : activeGoal.type === 'floor'
+            ? floors
+            : this.onBeatDrops;
+      if (progress >= activeGoal.target) {
+        this.score += activeGoal.bonus;
+        this.goalsCleared += 1;
+        this.goalIndex += 1;
+        this.audio.playNewBest();
+        this.callouts.push({
+          x: 0,
+          y: worldY + SLAB_HEIGHT + 52,
+          text: `GOAL +${activeGoal.bonus}`,
+          color: '#34d399',
+          life: 0,
+          maxLife: 1.05
+        });
+      }
+    }
+
     if (this.score > this.best) {
       this.best = this.score;
       this.saveInt(BEST_STORAGE_KEY, this.best);
@@ -458,6 +514,16 @@ export class PrecisionStackGame {
     const top = this.stack[this.stack.length - 1];
     const widthPct = top ? Math.max(1, Math.round((top.width / this.baseWidth) * 100)) : 100;
     const accuracyPct = this.totalDrops > 0 ? Math.round((this.perfectDrops / this.totalDrops) * 100) : 0;
+    const floors = Math.max(0, this.stack.length - 1);
+    const goal = RUN_GOALS[this.goalIndex % RUN_GOALS.length];
+    const progress =
+      goal.type === 'streak'
+        ? this.streak
+        : goal.type === 'floor'
+          ? floors
+          : this.onBeatDrops;
+    const goalLabel = `${goal.label} (${Math.min(progress, goal.target)}/${goal.target})`;
+
     this.onSnapshot({
       phase: this.phase,
       score: this.score,
@@ -465,7 +531,9 @@ export class PrecisionStackGame {
       streak: this.streak,
       maxStreak: this.maxStreak,
       widthPct,
-      accuracyPct
+      accuracyPct,
+      goalLabel,
+      goalsCleared: this.goalsCleared
     });
   }
 

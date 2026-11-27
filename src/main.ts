@@ -8,6 +8,7 @@ const bestEl = document.getElementById('best-value') as HTMLElement;
 const widthEl = document.getElementById('width-value') as HTMLElement;
 const streakPillEl = document.getElementById('streak-pill') as HTMLElement;
 const streakEl = document.getElementById('streak-value') as HTMLElement;
+const goalLineEl = document.getElementById('goal-line') as HTMLElement;
 
 const meterBarEl = document.getElementById('meter-bar') as HTMLElement;
 const trackToastEl = document.getElementById('track-toast') as HTMLElement;
@@ -63,6 +64,13 @@ const game = new PrecisionStackGame(
       streakPillEl.hidden = false;
     } else {
       streakPillEl.hidden = true;
+    }
+
+    if (snap.phase === 'playing') {
+      goalLineEl.textContent = `GOAL ${snap.goalLabel}`;
+      goalLineEl.hidden = false;
+    } else {
+      goalLineEl.hidden = true;
     }
 
     overlayStart.hidden = snap.phase !== 'ready';
