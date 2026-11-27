@@ -23,6 +23,7 @@ export class AudioEngine {
 
   private toneTimer: number | null = null;
   private toneBus: GainNode | null = null;
+  private speakerGain: GainNode | null = null;
   private toneStep = 0;
   private towerStage = 0;
 
@@ -51,7 +52,19 @@ export class AudioEngine {
       this.analyser.smoothingTimeConstant = 0.72;
       this.freqData = new Uint8Array(new ArrayBuffer(this.analyser.frequencyBinCount));
     }
+    if (!this.speakerGain) {
+      this.speakerGain = this.ctx.createGain();
+      this.speakerGain.gain.setValueAtTime(this.sfxEnabled ? 1 : 0, this.ctx.currentTime);
+      this.speakerGain.connect(this.ctx.destination);
+    }
     return this.ctx;
+  }
+
+  public setSoundEnabled(enabled: boolean): void {
+    this.sfxEnabled = enabled;
+    if (this.ctx && this.speakerGain) {
+      this.speakerGain.gain.setTargetAtTime(enabled ? 1 : 0, this.ctx.currentTime, 0.015);
+    }
   }
 
   public setTowerLevel(level: number): void {
@@ -65,7 +78,7 @@ export class AudioEngine {
     const bus = ctx.createGain();
     bus.gain.setValueAtTime(0.45, ctx.currentTime);
     bus.connect(this.analyser!);
-    bus.connect(ctx.destination);
+    bus.connect(this.speakerGain!);
     this.toneBus = bus;
     this.toneStep = 0;
     this.mode = 'tone';

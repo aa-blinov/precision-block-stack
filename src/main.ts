@@ -78,7 +78,7 @@ btnTone.addEventListener('click', () => {
 });
 
 btnSfx.addEventListener('click', () => {
-  audio.sfxEnabled = !audio.sfxEnabled;
+  audio.setSoundEnabled(!audio.sfxEnabled);
   syncAudioButtons();
 });
 
