@@ -307,7 +307,7 @@ export class PrecisionStackGame {
       this.callouts.push({
         x: prev.x,
         y: current.y + SLAB_HEIGHT + 12,
-        text: parts.join(' · '),
+        text: parts.join(' '),
         color: this.streak >= 4 ? '#fbbf24' : '#34d399',
         life: 0,
         maxLife: 0.9
@@ -751,16 +751,6 @@ export class PrecisionStackGame {
     ctx.beginPath();
     ctx.roundRect(rx, ry, rw, rh, radius);
     ctx.stroke();
-
-    // Subtle side beat brackets when ON BEAT is active
-    if (onBeat) {
-      const midY = bottomY - SLAB_HEIGHT / 2;
-      ctx.fillStyle = 'rgba(251, 191, 36, 0.95)';
-      ctx.beginPath();
-      ctx.arc(centerX - width / 2 - 10, midY, 2.5, 0, Math.PI * 2);
-      ctx.arc(centerX + width / 2 + 10, midY, 2.5, 0, Math.PI * 2);
-      ctx.fill();
-    }
     ctx.restore();
   }
 

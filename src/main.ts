@@ -35,7 +35,7 @@ let trackToastTimer = 0;
 function showTrackToast(): void {
   const info = audio.getTrackInfo();
   const num = String(info.index + 1).padStart(2, '0');
-  trackToastEl.textContent = `${num}/${info.total} · ${info.name} · ${info.bpm} BPM`;
+  trackToastEl.textContent = `${num}/${info.total} ${info.name} (${info.bpm} BPM)`;
   trackToastEl.hidden = false;
   window.clearTimeout(trackToastTimer);
   trackToastTimer = window.setTimeout(() => {
