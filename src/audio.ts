@@ -4,16 +4,143 @@ export interface AudioMetrics {
   level: number;
   bass: number;
   beat: number;
+  beatPhase: number;
+  onBeat: boolean;
   spectrum: number[];
+}
+
+export interface TrackInfo {
+  index: number;
+  total: number;
+  name: string;
+  bpm: number;
+}
+
+interface TrackPreset {
+  name: string;
+  bpm: number;
+  bassWave: OscillatorType;
+  leadWave: OscillatorType;
+  filterBase: number;
+  kickFreq: number;
+  bassNotes: number[];
+  leadNotes: number[];
+  hatPattern: number[];
 }
 
 const PENTATONIC_HZ = [261.63, 293.66, 329.63, 392.0, 440.0, 523.25, 587.33, 659.25, 783.99, 880.0];
 
-// Chord progressions shift every 10 floors so the soundtrack evolves with tower height
-const STAGE_PROGRESSIONS = [
-  { bass: [65.41, 65.41, 77.78, 65.41, 87.31, 65.41, 98.0, 77.78], arp: [261.63, 311.13, 392.0, 523.25, 392.0, 311.13, 466.16, 392.0] },
-  { bass: [73.42, 73.42, 87.31, 73.42, 98.0, 73.42, 110.0, 87.31], arp: [293.66, 349.23, 440.0, 587.33, 440.0, 349.23, 523.25, 440.0] },
-  { bass: [82.41, 82.41, 98.0, 82.41, 110.0, 82.41, 123.47, 98.0], arp: [329.63, 392.0, 493.88, 659.25, 493.88, 392.0, 587.33, 493.88] }
+export const TRACKS: TrackPreset[] = [
+  {
+    name: 'Midnight Pulse',
+    bpm: 118,
+    bassWave: 'sawtooth',
+    leadWave: 'triangle',
+    filterBase: 640,
+    kickFreq: 145,
+    bassNotes: [65.41, 65.41, 77.78, 65.41, 87.31, 65.41, 98.0, 77.78],
+    leadNotes: [261.63, 311.13, 392.0, 523.25, 392.0, 311.13, 466.16, 392.0],
+    hatPattern: [0, 0, 1, 0, 0, 0, 1, 1]
+  },
+  {
+    name: 'Neon Skyline',
+    bpm: 124,
+    bassWave: 'sawtooth',
+    leadWave: 'sine',
+    filterBase: 760,
+    kickFreq: 155,
+    bassNotes: [73.42, 73.42, 87.31, 98.0, 73.42, 110.0, 98.0, 87.31],
+    leadNotes: [293.66, 440.0, 523.25, 587.33, 440.0, 349.23, 523.25, 440.0],
+    hatPattern: [0, 1, 1, 0, 0, 1, 1, 0]
+  },
+  {
+    name: 'Deep Horizon',
+    bpm: 108,
+    bassWave: 'triangle',
+    leadWave: 'sine',
+    filterBase: 480,
+    kickFreq: 125,
+    bassNotes: [55.0, 55.0, 65.41, 55.0, 73.42, 55.0, 82.41, 65.41],
+    leadNotes: [220.0, 261.63, 329.63, 392.0, 329.63, 261.63, 440.0, 329.63],
+    hatPattern: [0, 0, 1, 0, 0, 0, 1, 0]
+  },
+  {
+    name: 'Cyber Arp',
+    bpm: 128,
+    bassWave: 'square',
+    leadWave: 'sawtooth',
+    filterBase: 860,
+    kickFreq: 165,
+    bassNotes: [82.41, 82.41, 98.0, 82.41, 110.0, 98.0, 123.47, 98.0],
+    leadNotes: [329.63, 493.88, 659.25, 587.33, 493.88, 392.0, 587.33, 493.88],
+    hatPattern: [1, 0, 1, 0, 1, 0, 1, 1]
+  },
+  {
+    name: 'Velvet Drift',
+    bpm: 96,
+    bassWave: 'triangle',
+    leadWave: 'triangle',
+    filterBase: 420,
+    kickFreq: 118,
+    bassNotes: [61.74, 61.74, 73.42, 61.74, 82.41, 73.42, 92.5, 73.42],
+    leadNotes: [246.94, 293.66, 369.99, 440.0, 369.99, 293.66, 329.63, 293.66],
+    hatPattern: [0, 0, 1, 0, 0, 1, 0, 0]
+  },
+  {
+    name: 'Acid Orbit',
+    bpm: 132,
+    bassWave: 'sawtooth',
+    leadWave: 'square',
+    filterBase: 940,
+    kickFreq: 170,
+    bassNotes: [65.41, 98.0, 65.41, 130.81, 65.41, 116.54, 98.0, 77.78],
+    leadNotes: [261.63, 392.0, 523.25, 392.0, 466.16, 392.0, 622.25, 523.25],
+    hatPattern: [0, 1, 1, 1, 0, 1, 1, 1]
+  },
+  {
+    name: 'Solaris Chord',
+    bpm: 114,
+    bassWave: 'sine',
+    leadWave: 'triangle',
+    filterBase: 580,
+    kickFreq: 138,
+    bassNotes: [69.3, 69.3, 82.41, 92.5, 69.3, 103.83, 92.5, 82.41],
+    leadNotes: [277.18, 349.23, 415.3, 554.37, 415.3, 349.23, 493.88, 415.3],
+    hatPattern: [0, 0, 1, 0, 0, 1, 1, 0]
+  },
+  {
+    name: 'Subway Echo',
+    bpm: 122,
+    bassWave: 'square',
+    leadWave: 'sine',
+    filterBase: 620,
+    kickFreq: 150,
+    bassNotes: [58.27, 58.27, 69.3, 58.27, 77.78, 69.3, 87.31, 69.3],
+    leadNotes: [233.08, 349.23, 466.16, 349.23, 311.13, 233.08, 392.0, 349.23],
+    hatPattern: [0, 1, 1, 0, 1, 0, 1, 0]
+  },
+  {
+    name: 'Chrome Runner',
+    bpm: 136,
+    bassWave: 'sawtooth',
+    leadWave: 'triangle',
+    filterBase: 880,
+    kickFreq: 174,
+    bassNotes: [73.42, 110.0, 73.42, 146.83, 87.31, 110.0, 98.0, 130.81],
+    leadNotes: [293.66, 440.0, 587.33, 659.25, 587.33, 440.0, 523.25, 440.0],
+    hatPattern: [1, 0, 1, 1, 1, 0, 1, 1]
+  },
+  {
+    name: 'Zenith Glow',
+    bpm: 120,
+    bassWave: 'triangle',
+    leadWave: 'sine',
+    filterBase: 700,
+    kickFreq: 148,
+    bassNotes: [65.41, 82.41, 98.0, 82.41, 73.42, 87.31, 110.0, 98.0],
+    leadNotes: [261.63, 329.63, 392.0, 523.25, 440.0, 392.0, 493.88, 392.0],
+    hatPattern: [0, 0, 1, 0, 1, 0, 1, 0]
+  }
 ];
 
 export class AudioEngine {
@@ -21,18 +148,21 @@ export class AudioEngine {
   private analyser: AnalyserNode | null = null;
   private freqData: Uint8Array<ArrayBuffer> | null = null;
 
-  private toneTimer: number | null = null;
+  private schedulerTimer: number | null = null;
   private toneBus: GainNode | null = null;
   private speakerGain: GainNode | null = null;
-  private toneStep = 0;
-  private towerStage = 0;
+
+  private nextNoteTime = 0;
+  private beatOriginTime = 0;
+  private currentStep = 0;
+  private trackIndex = 0;
+  private towerTranspose = 1;
 
   public mode: AudioMode = 'off';
   public sfxEnabled = true;
 
   private smoothLevel = 0;
   private smoothBass = 0;
-  private prevBass = 0;
   private beatPulse = 0;
   private readonly spectrumBins = new Array<number>(28).fill(0);
 
@@ -68,7 +198,28 @@ export class AudioEngine {
   }
 
   public setTowerLevel(level: number): void {
-    this.towerStage = Math.floor(level / 10) % STAGE_PROGRESSIONS.length;
+    const stage = Math.floor(level / 10) % 3;
+    this.towerTranspose = stage === 0 ? 1 : stage === 1 ? 1.12246 : 1.25992; // +0, +2, +4 semitones
+  }
+
+  public getTrackInfo(): TrackInfo {
+    const track = TRACKS[this.trackIndex];
+    return {
+      index: this.trackIndex,
+      total: TRACKS.length,
+      name: track.name,
+      bpm: track.bpm
+    };
+  }
+
+  public nextTrack(): TrackInfo {
+    this.trackIndex = (this.trackIndex + 1) % TRACKS.length;
+    if (this.mode === 'tone' && this.ctx) {
+      this.beatOriginTime = this.ctx.currentTime;
+      this.nextNoteTime = this.ctx.currentTime;
+      this.currentStep = 0;
+    }
+    return this.getTrackInfo();
   }
 
   public enableTestTone(): void {
@@ -80,103 +231,129 @@ export class AudioEngine {
     bus.connect(this.analyser!);
     bus.connect(this.speakerGain!);
     this.toneBus = bus;
-    this.toneStep = 0;
+
+    this.currentStep = 0;
+    this.beatOriginTime = ctx.currentTime + 0.02;
+    this.nextNoteTime = this.beatOriginTime;
     this.mode = 'tone';
 
-    const stepMs = 125;
-    this.triggerGrooveStep(ctx, bus, this.toneStep++);
-    this.toneTimer = window.setInterval(() => {
-      if (this.mode !== 'tone' || !this.ctx || !this.toneBus) return;
-      this.triggerGrooveStep(this.ctx, this.toneBus, this.toneStep++);
-    }, stepMs);
+    // Lookahead scheduler keeps WebAudio timing sample-accurate
+    this.scheduleAhead();
+    this.schedulerTimer = window.setInterval(() => {
+      this.scheduleAhead();
+    }, 25);
   }
 
-  private triggerGrooveStep(ctx: AudioContext, bus: GainNode, step: number): void {
-    const now = ctx.currentTime;
-    const eighth = step % 2 === 0;
-    const quarter = step % 4 === 0;
-    const prog = STAGE_PROGRESSIONS[this.towerStage];
+  private scheduleAhead(): void {
+    if (this.mode !== 'tone' || !this.ctx || !this.toneBus) return;
+    const lookaheadSec = 0.11;
+    const track = TRACKS[this.trackIndex];
+    const sixteenthSec = 60 / track.bpm / 4;
 
+    while (this.nextNoteTime < this.ctx.currentTime + lookaheadSec) {
+      this.scheduleStep(this.ctx, this.toneBus, track, this.currentStep, this.nextNoteTime);
+      this.nextNoteTime += sixteenthSec;
+      this.currentStep += 1;
+    }
+  }
+
+  private scheduleStep(
+    ctx: AudioContext,
+    bus: GainNode,
+    track: TrackPreset,
+    step: number,
+    time: number
+  ): void {
+    const quarter = step % 4 === 0;
+    const eighth = step % 2 === 0;
+    const tr = this.towerTranspose;
+
+    // Kick on every quarter beat
     if (quarter) {
       const kickOsc = ctx.createOscillator();
       kickOsc.type = 'sine';
-      kickOsc.frequency.setValueAtTime(148, now);
-      kickOsc.frequency.exponentialRampToValueAtTime(44, now + 0.11);
+      kickOsc.frequency.setValueAtTime(track.kickFreq, time);
+      kickOsc.frequency.exponentialRampToValueAtTime(42, time + 0.11);
 
       const kickGain = ctx.createGain();
-      kickGain.gain.setValueAtTime(0.44, now);
-      kickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+      kickGain.gain.setValueAtTime(0.44, time);
+      kickGain.gain.exponentialRampToValueAtTime(0.001, time + 0.18);
 
       kickOsc.connect(kickGain);
       kickGain.connect(bus);
-      kickOsc.start(now);
-      kickOsc.stop(now + 0.2);
+      kickOsc.start(time);
+      kickOsc.stop(time + 0.2);
     }
 
+    // Bassline on 8th notes
     if (eighth) {
-      const bassFreq = prog.bass[Math.floor(step / 2) % prog.bass.length];
+      const idx = Math.floor(step / 2) % track.bassNotes.length;
+      const bassFreq = track.bassNotes[idx] * tr;
       const bassOsc = ctx.createOscillator();
-      bassOsc.type = 'sawtooth';
-      bassOsc.frequency.setValueAtTime(bassFreq, now);
+      bassOsc.type = track.bassWave;
+      bassOsc.frequency.setValueAtTime(bassFreq, time);
 
       const filter = ctx.createBiquadFilter();
       filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(700 + this.towerStage * 120, now);
-      filter.frequency.exponentialRampToValueAtTime(185, now + 0.19);
-      filter.Q.setValueAtTime(3.2, now);
+      filter.frequency.setValueAtTime(track.filterBase, time);
+      filter.frequency.exponentialRampToValueAtTime(175, time + 0.18);
+      filter.Q.setValueAtTime(3.0, time);
 
       const bassGain = ctx.createGain();
-      bassGain.gain.setValueAtTime(0.16, now);
-      bassGain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+      bassGain.gain.setValueAtTime(0.15, time);
+      bassGain.gain.exponentialRampToValueAtTime(0.001, time + 0.19);
 
       bassOsc.connect(filter);
       filter.connect(bassGain);
       bassGain.connect(bus);
-      bassOsc.start(now);
-      bassOsc.stop(now + 0.21);
+      bassOsc.start(time);
+      bassOsc.stop(time + 0.2);
     }
 
-    if (step % 4 === 2) {
+    // Hi-hat pattern
+    if (track.hatPattern[step % track.hatPattern.length]) {
       const hatOsc = ctx.createOscillator();
       hatOsc.type = 'square';
-      hatOsc.frequency.setValueAtTime(6400, now);
+      hatOsc.frequency.setValueAtTime(6400, time);
 
       const hp = ctx.createBiquadFilter();
       hp.type = 'highpass';
-      hp.frequency.setValueAtTime(4400, now);
+      hp.frequency.setValueAtTime(4400, time);
 
       const hatGain = ctx.createGain();
-      hatGain.gain.setValueAtTime(0.042, now);
-      hatGain.gain.exponentialRampToValueAtTime(0.0005, now + 0.045);
+      hatGain.gain.setValueAtTime(0.04, time);
+      hatGain.gain.exponentialRampToValueAtTime(0.0005, time + 0.042);
 
       hatOsc.connect(hp);
       hp.connect(hatGain);
       hatGain.connect(bus);
-      hatOsc.start(now);
-      hatOsc.stop(now + 0.05);
+      hatOsc.start(time);
+      hatOsc.stop(time + 0.05);
     }
 
+    // Melodic lead / arp on off-beats
     if (step % 2 === 1) {
-      const arpFreq = prog.arp[Math.floor(step / 2) % prog.arp.length];
-      const arpOsc = ctx.createOscillator();
-      arpOsc.type = 'triangle';
-      arpOsc.frequency.setValueAtTime(arpFreq, now);
+      const idx = Math.floor(step / 2) % track.leadNotes.length;
+      const leadFreq = track.leadNotes[idx] * tr;
+      const leadOsc = ctx.createOscillator();
+      leadOsc.type = track.leadWave;
+      leadOsc.frequency.setValueAtTime(leadFreq, time);
 
-      const arpGain = ctx.createGain();
-      arpGain.gain.setValueAtTime(0.06, now);
-      arpGain.gain.exponentialRampToValueAtTime(0.0008, now + 0.14);
+      const leadGain = ctx.createGain();
+      leadGain.gain.setValueAtTime(0.055, time);
+      leadGain.gain.exponentialRampToValueAtTime(0.0008, time + 0.14);
 
-      arpOsc.connect(arpGain);
-      arpGain.connect(bus);
-      arpOsc.start(now);
-      arpOsc.stop(now + 0.15);
+      leadOsc.connect(leadGain);
+      leadGain.connect(bus);
+      leadOsc.start(time);
+      leadOsc.stop(time + 0.15);
     }
   }
 
   public stopSource(): void {
-    if (this.toneTimer !== null) {
-      window.clearInterval(this.toneTimer);
-      this.toneTimer = null;
+    if (this.schedulerTimer !== null) {
+      window.clearInterval(this.schedulerTimer);
+      this.schedulerTimer = null;
     }
     if (this.toneBus) {
       this.toneBus.disconnect();
@@ -186,7 +363,7 @@ export class AudioEngine {
   }
 
   public sample(): AudioMetrics {
-    if (this.mode === 'off' || !this.analyser || !this.freqData) {
+    if (this.mode === 'off' || !this.analyser || !this.freqData || !this.ctx) {
       this.smoothLevel *= 0.86;
       this.smoothBass *= 0.86;
       this.beatPulse *= 0.82;
@@ -197,6 +374,8 @@ export class AudioEngine {
         level: this.smoothLevel,
         bass: this.smoothBass,
         beat: this.beatPulse,
+        beatPhase: 0,
+        onBeat: false,
         spectrum: this.spectrumBins
       };
     }
@@ -222,13 +401,14 @@ export class AudioEngine {
     this.smoothLevel += (rawLevel - this.smoothLevel) * 0.3;
     this.smoothBass += (rawBass - this.smoothBass) * 0.34;
 
-    const bassRise = rawBass - this.prevBass;
-    this.prevBass = rawBass;
-    if (bassRise > 0.085 && rawBass > 0.28) {
-      this.beatPulse = 1;
-    } else {
-      this.beatPulse *= 0.86;
-    }
+    // Sample-accurate beat phase derived directly from AudioContext clock & track BPM
+    const track = TRACKS[this.trackIndex];
+    const beatsElapsed = Math.max(0, (this.ctx.currentTime - this.beatOriginTime) * (track.bpm / 60));
+    const beatPhase = beatsElapsed % 1;
+    // Exact beat pulse: peaks at 1.0 right on the kick (phase 0) and decays smoothly
+    this.beatPulse = Math.max(0, 1 - beatPhase * 2.4);
+    // Fair, rhythmic ON BEAT window centered on each quarter-note kick
+    const onBeat = beatPhase <= 0.24 || beatPhase >= 0.88;
 
     const bins = this.spectrumBins.length;
     const step = Math.max(1, Math.floor((len * 0.62) / bins));
@@ -246,6 +426,8 @@ export class AudioEngine {
       level: this.smoothLevel,
       bass: this.smoothBass,
       beat: this.beatPulse,
+      beatPhase,
+      onBeat,
       spectrum: this.spectrumBins
     };
   }
@@ -279,7 +461,7 @@ export class AudioEngine {
       osc.connect(gain);
       overtone.connect(overGain);
       overGain.connect(gain);
-      gain.connect(ctx.destination);
+      gain.connect(this.speakerGain!);
 
       osc.start(now);
       overtone.start(now);
@@ -299,7 +481,7 @@ export class AudioEngine {
     gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
 
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(this.speakerGain!);
     osc.start(now);
     osc.stop(now + 0.13);
   }
@@ -321,7 +503,7 @@ export class AudioEngine {
       gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.26);
 
       osc.connect(gain);
-      gain.connect(ctx.destination);
+      gain.connect(this.speakerGain!);
       osc.start(t);
       osc.stop(t + 0.28);
     });
@@ -347,7 +529,7 @@ export class AudioEngine {
 
     osc.connect(filter);
     filter.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(this.speakerGain!);
 
     osc.start(now);
     osc.stop(now + 0.52);

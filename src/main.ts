@@ -10,8 +10,10 @@ const streakPillEl = document.getElementById('streak-pill') as HTMLElement;
 const streakEl = document.getElementById('streak-value') as HTMLElement;
 
 const meterBarEl = document.getElementById('meter-bar') as HTMLElement;
+const trackToastEl = document.getElementById('track-toast') as HTMLElement;
 
 const btnTone = document.getElementById('btn-tone') as HTMLButtonElement;
+const btnNextTrack = document.getElementById('btn-next-track') as HTMLButtonElement;
 const btnSfx = document.getElementById('btn-sfx') as HTMLButtonElement;
 const iconSfxOn = document.getElementById('icon-sfx-on') as unknown as SVGElement;
 const iconSfxOff = document.getElementById('icon-sfx-off') as unknown as SVGElement;
@@ -28,6 +30,18 @@ const finalAccuracyEl = document.getElementById('final-accuracy') as HTMLElement
 const finalStreakEl = document.getElementById('final-streak') as HTMLElement;
 
 const audio = new AudioEngine();
+let trackToastTimer = 0;
+
+function showTrackToast(): void {
+  const info = audio.getTrackInfo();
+  const num = String(info.index + 1).padStart(2, '0');
+  trackToastEl.textContent = `${num}/${info.total} · ${info.name} · ${info.bpm} BPM`;
+  trackToastEl.hidden = false;
+  window.clearTimeout(trackToastTimer);
+  trackToastTimer = window.setTimeout(() => {
+    trackToastEl.hidden = true;
+  }, 2400);
+}
 
 function syncAudioButtons(): void {
   btnTone.setAttribute('aria-pressed', String(audio.mode === 'tone'));
@@ -71,9 +85,20 @@ const game = new PrecisionStackGame(
 btnTone.addEventListener('click', () => {
   if (audio.mode === 'tone') {
     audio.stopSource();
+    trackToastEl.hidden = true;
   } else {
     audio.enableTestTone();
+    showTrackToast();
   }
+  syncAudioButtons();
+});
+
+btnNextTrack.addEventListener('click', () => {
+  audio.nextTrack();
+  if (audio.mode !== 'tone') {
+    audio.enableTestTone();
+  }
+  showTrackToast();
   syncAudioButtons();
 });
 
@@ -88,6 +113,7 @@ btnStart.addEventListener('click', () => {
 
 btnStartTone.addEventListener('click', () => {
   audio.enableTestTone();
+  showTrackToast();
   syncAudioButtons();
   game.start();
 });

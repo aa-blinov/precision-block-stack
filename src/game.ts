@@ -109,7 +109,14 @@ export class PrecisionStackGame {
   private lastTime = 0;
   private rafId = 0;
 
-  private audioMetrics: AudioMetrics = { level: 0, bass: 0, beat: 0, spectrum: [] };
+  private audioMetrics: AudioMetrics = {
+    level: 0,
+    bass: 0,
+    beat: 0,
+    beatPhase: 0,
+    onBeat: false,
+    spectrum: []
+  };
 
   constructor(
     private readonly canvas: HTMLCanvasElement,
@@ -247,7 +254,7 @@ export class PrecisionStackGame {
     const current = this.active;
     const prev = this.stack[this.stack.length - 1];
     const delta = current.x - prev.x;
-    const onBeat = this.audio.mode !== 'off' && (this.audioMetrics.beat > 0.38 || this.audioMetrics.level > 0.52);
+    const onBeat = this.audio.mode !== 'off' && this.audioMetrics.onBeat;
 
     this.totalDrops += 1;
 
@@ -645,19 +652,17 @@ export class PrecisionStackGame {
       );
     }
 
-    // Active moving slab + audio beat ring
+    // Active moving slab + smooth converging Beat Halo
     if (this.active) {
       const screenY = this.worldToScreenY(this.active.y);
-      const onBeat = this.audio.mode !== 'off' && (audioBeat > 0.38 || audioLevel > 0.52);
 
-      if (onBeat) {
-        ctx.strokeStyle = `hsla(45, 96%, 64%, ${(0.42 + audioBeat * 0.48).toFixed(3)})`;
-        ctx.lineWidth = 2;
-        ctx.strokeRect(
-          cx + this.active.x - this.active.width / 2 - 5,
-          screenY - SLAB_HEIGHT - DEPTH_Y - 5,
-          this.active.width + 10,
-          SLAB_HEIGHT + DEPTH_Y + 10
+      if (this.audio.mode !== 'off') {
+        this.drawBeatHalo(
+          cx + this.active.x,
+          screenY,
+          this.active.width,
+          this.audioMetrics.beatPhase,
+          this.audioMetrics.onBeat
         );
       }
 
@@ -711,6 +716,51 @@ export class PrecisionStackGame {
       ctx.restore();
     }
 
+    ctx.restore();
+  }
+
+  private drawBeatHalo(
+    centerX: number,
+    bottomY: number,
+    width: number,
+    beatPhase: number,
+    onBeat: boolean
+  ): void {
+    const ctx = this.ctx;
+    // Converges smoothly toward the slab as beatPhase approaches 1.0 (next downbeat)
+    const approach = beatPhase > 0.3 ? (1 - beatPhase) / 0.7 : 0;
+    const pad = onBeat ? 3 : 3 + approach * 14;
+    const rx = centerX - width / 2 - pad;
+    const ry = bottomY - SLAB_HEIGHT - DEPTH_Y - pad;
+    const rw = width + pad * 2;
+    const rh = SLAB_HEIGHT + DEPTH_Y + pad * 2;
+    const radius = 8;
+
+    ctx.save();
+    if (onBeat) {
+      ctx.shadowColor = 'rgba(251, 191, 36, 0.75)';
+      ctx.shadowBlur = 16;
+      ctx.strokeStyle = 'rgba(251, 191, 36, 0.92)';
+      ctx.lineWidth = 2;
+    } else {
+      const alpha = 0.14 + (1 - approach) * 0.22;
+      ctx.strokeStyle = `rgba(251, 191, 36, ${alpha.toFixed(3)})`;
+      ctx.lineWidth = 1.2;
+    }
+
+    ctx.beginPath();
+    ctx.roundRect(rx, ry, rw, rh, radius);
+    ctx.stroke();
+
+    // Subtle side beat brackets when ON BEAT is active
+    if (onBeat) {
+      const midY = bottomY - SLAB_HEIGHT / 2;
+      ctx.fillStyle = 'rgba(251, 191, 36, 0.95)';
+      ctx.beginPath();
+      ctx.arc(centerX - width / 2 - 10, midY, 2.5, 0, Math.PI * 2);
+      ctx.arc(centerX + width / 2 + 10, midY, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
     ctx.restore();
   }
 

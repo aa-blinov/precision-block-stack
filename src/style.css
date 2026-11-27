@@ -185,6 +185,22 @@ body {
   background: rgba(56, 189, 248, 0.16);
 }
 
+.track-toast {
+  position: absolute;
+  top: 60px;
+  right: max(20px, env(safe-area-inset-right));
+  z-index: 10;
+  padding: 5px 10px;
+  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
 .audio-status {
   position: absolute;
   top: 66px;
