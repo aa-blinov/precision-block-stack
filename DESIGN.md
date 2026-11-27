@@ -22,9 +22,10 @@ typography:
   mono:
     fontFamily: "'JetBrains Mono', ui-monospace, monospace"
 rounded:
+  sm: "6px"
+  control: "10px"
   md: "12px"
   lg: "16px"
-  pill: "999px"
 spacing:
   sm: "8px"
   md: "16px"
